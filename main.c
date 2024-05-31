@@ -51,7 +51,12 @@ void spi_init() {
 
 
 void button2_int() {
-
+    P2DIR &= ~BIT0;
+    P2OUT =  0x01;
+    P2REN |= 0x01;
+    P2IE |= 0x01;
+    P2IES |= 0x01;
+    P2IFG |= 0x01;
 }
 
 void main(void) {
@@ -59,8 +64,10 @@ void main(void) {
 
     initializeUART();
     spi_init();
+    button2_int();
 
     P1DIR |= BIT0;      // P1DIR is a register that configures the direction (DIR) of a port pin as an output or an input.
+
     P1DIR &= (~BIT3);     // Set P1.3 SEL as Input
     P1IE |= BIT3;         // Interrupt Enable
     P1IES |= BIT3;        // Trigger from High to Low and low to high
@@ -87,6 +94,16 @@ __interrupt void PORT1_ISR(void)
     }
 
 }
+
+#pragma vector = PORT2_VECTOR
+__interrupt void PORT2_ISR(void)
+{
+    if (P2IFG & BIT0) {
+        P1OUT ^= BIT0;
+        P2IFG &= ~BIT0;
+    }
+}
+
 
 #pragma vector = USCIAB0TX_VECTOR
 __interrupt void USCBRX_IRS(void)
