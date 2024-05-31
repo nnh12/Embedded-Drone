@@ -1,0 +1,5 @@
+"./main.obj"
+"./rgb_interface.obj"
+"./simon_random.obj"
+"../lnk_msp430g2533.cmd"
+-llibc.a
