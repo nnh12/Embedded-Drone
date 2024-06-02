@@ -4,14 +4,14 @@ volatile unsigned int i = 0;            // Volatile to prevent optimization. Thi
 char text[] = "Green\r\n";
 
 void serial_output(char *str) {
-    while (*str != 0) {
+    //while (*str != 0) {
 
         while (!(IFG2 & UCB0TXIFG));
-        UCB0TXBUF = *str++;
+        UCB0TXBUF = 0x69;
 
         while (!(IFG2 & UCA0TXIFG));
         UCA0TXBUF = UCB0RXBUF;
-    }
+    //}
 }
 
 
@@ -86,7 +86,6 @@ void main(void) {
 __interrupt void PORT1_ISR(void)
 {
 
-    //P1IES ^= BIT3;    // If you want to set an interrupt when button press is released
     if(P1IFG & BIT3) {
         serial_output(text);
         P1OUT ^= BIT0;
@@ -112,6 +111,5 @@ __interrupt void USCBRX_IRS(void)
     while (!(IFG2 & UCB0RXIFG));
     int data = (unsigned int)UCB0RXBUF;
     P1OUT ^= BIT0;
-    //int data = (unsigned int)UCB0RXBUF;
 }
 
