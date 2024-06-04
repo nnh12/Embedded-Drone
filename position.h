@@ -9,8 +9,6 @@
 #define POSITION_H_
 
 
-void serial_output(char *str, position* p);
-
 typedef struct {
     int left;
     int right;
@@ -19,5 +17,6 @@ typedef struct {
     int idle;
 } position;
 
+void serial_output(char *str, position* p);
 
 #endif /* POSITION_H_ */
