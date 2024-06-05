@@ -1,21 +1,28 @@
 #include  <msp430g2553.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "position.h"
+
 volatile unsigned int i = 0;            // Volatile to prevent optimization. This keeps count of cycles between LED toggles
 
 char text[] = "Green\r\n";
 
 position pos;
 
-void serial_output(char *str, position* p) {
-    //while (*str != 0) {
 
+void serial_output(char *str, position* p) {
         while (!(IFG2 & UCB0TXIFG));
         UCB0TXBUF = p->right;
 
         while (!(IFG2 & UCA0TXIFG));
         UCA0TXBUF = UCB0RXBUF;
-    //}
 }
+
+void read_file(FILE *ptr) {
+    ptr = fopen("config.txt", 'r');
+}
+
 
 
 void initializeUART(){
@@ -55,27 +62,29 @@ void spi_init() {
 
 void button2_int() {
     P2DIR &= ~BIT0;
-    P2OUT =  0x01;
-    P2REN |= 0x01;
-    P2IE |= 0x01;
-    P2IES |= 0x01;
-    P2IFG |= 0x01;
+    P2OUT =  BIT0;
+    P2REN |= BIT0;
+    P2IE |= BIT0;
+    P2IES |= BIT0;
+    P2IFG |= BIT0;
+}
+
+void button1_init()
+{
+    P1DIR |= BIT0;      // P1DIR is a register that configures the direction (DIR) of a port pin as an output or an input.
+    P1DIR &= ~BIT3;     // Set P1.3 SEL as Input
+    P1IE |= BIT3;       // Interrupt Enable
+    P1IES |= BIT3;      // Trigger from High to Low and low to high
+    P1IFG |= BIT3;      // Interrupt Flag
 }
 
 void main(void) {
-    WDTCTL = WDTPW + WDTHOLD;
+    WDTCTL = WDTPW + WDTHOLD; //
 
     initializeUART();
     spi_init();
     button2_int();
-
-    P1DIR |= BIT0;      // P1DIR is a register that configures the direction (DIR) of a port pin as an output or an input.
-    P1DIR &= (~BIT3);     // Set P1.3 SEL as Input
-    P1IE |= BIT3;         // Interrupt Enable
-    P1IES |= BIT3;        // Trigger from High to Low and low to high
-    P1IFG |= BIT3;        // Interrupt Flag
-
-    serial_output(text, &pos);
+    button1_init();
 
     __bis_SR_register(LPM0_bits + GIE);
 
@@ -88,12 +97,11 @@ void main(void) {
 __interrupt void PORT1_ISR(void)
 {
 
-    //P1IES ^= BIT3;    // If you want to set an interrupt when button press is released
     if(P1IFG & BIT3) {
         pos.right = 0xFF;
         serial_output(text, &pos);
         P1OUT ^= BIT0;
-        P1IFG &= ~BIT3; // Clear the Interrupt Flag
+        P1IFG &= ~BIT3;
     }
 
 }
