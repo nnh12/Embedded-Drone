@@ -7,9 +7,11 @@
 volatile unsigned int i = 0;            // Volatile to prevent optimization. This keeps count of cycles between LED toggles
 
 char text[] = "Green\r\n";
+char buffer[100] = {};
 
 position pos;
 
+spi_pos master_mode = IDLE;
 
 void serial_output(char *str, position* p) {
         while (!(IFG2 & UCB0TXIFG));
@@ -17,10 +19,38 @@ void serial_output(char *str, position* p) {
 
         while (!(IFG2 & UCA0TXIFG));
         UCA0TXBUF = UCB0RXBUF;
+
+        switch(master_mode)
+        {
+            case RIGHT:
+                UCB0TXBUF = 0x12;
+                UCA0TXBUF = UCB0RXBUF;
+        }
 }
 
-void read_file(FILE *ptr) {
-    ptr = fopen("config.txt", 'r');
+int read_file(FILE *ptr, char *s, FILE *ptr1) {
+
+    char ch;
+    int count = 0;
+
+    if (ptr == NULL) {
+        return -1;
+    }
+
+    do {
+        ch = fgetc(ptr);
+        printf("%c", ch);
+        s[count] = ch;
+        count++;
+
+        // Checking if character is not EOF.
+        // If it is EOF stop reading.
+     } while (ch != EOF);
+
+
+    fprintf(ptr1, s);
+    fclose(ptr);
+    return 0;
 }
 
 
@@ -99,6 +129,7 @@ __interrupt void PORT1_ISR(void)
 
     if(P1IFG & BIT3) {
         pos.right = 0xFF;
+        master_mode = RIGHT;
         serial_output(text, &pos);
         P1OUT ^= BIT0;
         P1IFG &= ~BIT3;
@@ -126,4 +157,3 @@ __interrupt void USCBRX_IRS(void)
     P1OUT ^= BIT0;
     //int data = (unsigned int)UCB0RXBUF;
 }
-
